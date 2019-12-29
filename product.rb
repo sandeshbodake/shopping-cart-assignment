@@ -5,6 +5,10 @@ class Product < Connector
   def initialize
     connector
   end
+  
+  def self.validate_price(price)
+  	price.to_f >= 0
+  end
 
   def list_product(rs)
     puts "\n\n********** Our Products ***************\n\n"
@@ -22,8 +26,13 @@ class Product < Connector
 
     list_product(rs)
   end
-
+  
   def find(id)
+    rs = @con.prepare 'find_by', "select id, name, price from products where id = $1"
+    rs = @con.exec_prepared 'find_by', [id]
+  end
+
+  def self.find(id)
     rs = @con.prepare 'find_by', "select id, name, price from products where id = $1"
     rs = @con.exec_prepared 'find_by', [id]
   end
@@ -43,15 +52,30 @@ class Product < Connector
 
   def self.create(p_name, price, category_id, description)
     @con = DatabaseConnector.new.connect
-
-    @con.exec "insert into products 
+		
+		if validate_price(price) && category_id
+    	product = @con.exec "insert into products 
                VALUES(#{Time.now.to_i},'#{p_name}',#{price.to_f}, #{1}, '#{description}', #{category_id}, '#{Time.now()}', '#{Time.now()}')"
+    	product_obj
+    else
+    	false
+    end
   end
 
   def self.destroy(product_id)
     @con = DatabaseConnector.new.connect
-
-    rs = @con.prepare 'destroy_item', "delete from products where id = $1"
-    rs = @con.exec_prepared 'destroy_item', [product_id]
+		
+		if self.find(product_id)
+    	rs = @con.prepare 'destroy_item', "delete from products where id = $1"
+    	rs = @con.exec_prepared 'destroy_item', [product_id]
+    	true
+    else
+    	false
+    end
   end
+
+  def self.product_obj
+		product = @con.exec "SELECT * FROM products ORDER BY id DESC  LIMIT 1"
+		product.first
+	end
 end

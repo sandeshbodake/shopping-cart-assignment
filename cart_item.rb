@@ -59,8 +59,14 @@ class CartItem < Connector
 	end
 
 	def insert
-		@con.exec "insert into cart_items VALUES(#{Time.now.to_i},
+		if @product_id && @quantity
+			@con.exec "insert into cart_items VALUES(#{Time.now.to_i},
 							 #{DEFAULT_USER}, #{@product_id}, #{@quantity},
 							 #{@amount.to_f}, '#{Time.now()}', '#{Time.now()}')"
-	end	
+			true
+		else
+			false
+		end
+	end
+		
 end

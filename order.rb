@@ -9,10 +9,10 @@ DEFAULT_USER = 1
 MAX_AMOUNT = 10000
 SEPARATER = ','
 class Order < Connector
-	def initialize(cart_item_ids, counpne_id = nil)
+	def initialize(cart_item_ids = '', counpne_id = nil)
 		connector
 
-		@cart_item_ids = cart_item_ids.split(SEPARATER)
+		@cart_item_ids = cart_item_ids
 		@coupne_id = counpne_id
 
 		@errors = []
@@ -42,7 +42,7 @@ class Order < Connector
 		order_id = Time.now.to_i
 		order = @con.exec "insert into orders 
 							 				 VALUES(#{order_id},#{DEFAULT_USER},#{0.to_f}, '#{Time.now()}', '#{Time.now()}')"
-		@cart_item_ids.each do |cart_item_id|
+		@cart_item_ids.split(SEPARATER).each do |cart_item_id|
 			cart_item = CartItem.new.find(cart_item_id).first
 			return not_found_message unless cart_item
 			product = Product.new.find(cart_item['product_id']).first
@@ -54,11 +54,17 @@ class Order < Connector
 		# all
   rescue StandardError
   	something_went_wrong
+  	false
 	end
 
 	def destroy_cart_item(cart_item_id)
-		@con.prepare 'destroy_cart_item', "delete from cart_items where id = $1"
-    @con.exec_prepared 'destroy_cart_item', [cart_item_id]
+	  if cart_item_id
+			@con.prepare 'destroy_cart_item', "delete from cart_items where id = $1"
+    	@con.exec_prepared 'destroy_cart_item', [cart_item_id]
+    	true
+    else
+    	false
+    end
 	end
 
 	def update_order_amount(order_id, order)

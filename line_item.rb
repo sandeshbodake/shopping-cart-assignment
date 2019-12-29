@@ -1,3 +1,6 @@
+require_relative "database_connector"
+require_relative "connector"
+
 class LineItem < Connector
 	def initialize(product = '', quantity = '', order_id = '')
 		connector
@@ -7,9 +10,14 @@ class LineItem < Connector
 	end
 
 	def create
-		@con.exec "insert into line_items 
-				       VALUES(#{last_id}, 'Order', #{@order_id},
-				       #{@product['price']}, #{@quantity}, #{@product['id']}, '#{Time.now()}', '#{Time.now()}')"
+	
+	  if @product
+			@con.exec "insert into line_items 
+				       	VALUES(#{last_id}, 'Order', #{@order_id},
+				       	#{@product['price']}, #{@quantity}, #{@product['id']}, '#{Time.now()}', '#{Time.now()}')"
+	  else
+	    false
+	  end    	
 	end
 
 	def order_line_items(order_id)
